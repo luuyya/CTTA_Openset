@@ -22,7 +22,7 @@ import os
 from detectron2.data import DatasetCatalog, MetadataCatalog
 
 from .builtin_meta import ADE20K_SEM_SEG_CATEGORIES, _get_builtin_metadata
-from .cityscapes import load_cityscapes_instances, load_cityscapes_semantic
+from .cityscapes import load_cityscapes_instances, load_cityscapes_semantic, load_cityscapes_instances_detection
 from .cityscapes_panoptic import register_all_cityscapes_panoptic
 from .coco import load_sem_seg, register_coco_instances
 from .coco_panoptic import register_coco_panoptic, register_coco_panoptic_separated
@@ -245,15 +245,27 @@ def register_all_ade20k(root):
             ignore_label=255,
         )
 
+def register_cityscapes_detection(root):
+    class_names=('person', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle')
+    image_dir = _root + '/leftImg8bit/'
+    gt_dir = _root + '/gtFine/'
+
+    for d in ["train", "val", "test"]:
+        DatasetCatalog.register(root + d, lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances_detection(x, y))
+        MetadataCatalog.get(root + d).set(thing_classes=class_names, evaluator_type="coco")
+
 
 # True for open source;
 # Internally at fb, we register them elsewhere
 if __name__.endswith(".builtin"):
     # Assume pre-defined datasets live in `./datasets`.
-    _root = os.path.expanduser(os.getenv("DETECTRON2_DATASETS", "datasets"))
-    register_all_coco(_root)
-    register_all_lvis(_root)
-    register_all_cityscapes(_root)
-    register_all_cityscapes_panoptic(_root)
-    register_all_pascal_voc(_root)
-    register_all_ade20k(_root)
+    # _root = os.path.expanduser(os.getenv("DETECTRON2_DATASETS", "datasets"))
+    # register_all_coco(_root)
+    # register_all_lvis(_root)
+    # register_all_cityscapes(_root)
+    # register_all_cityscapes_panoptic(_root)
+    # register_all_pascal_voc(_root)
+    # register_all_ade20k(_root)
+
+    _root = os.path.expanduser(os.getenv("DETECTRON2_DATASETS", "~/data_city"))
+    register_cityscapes_detection('cityscape_openset')
