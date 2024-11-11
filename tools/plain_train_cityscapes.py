@@ -177,6 +177,7 @@ def main(args):
         )
         return do_test(cfg, model)
 
+    # todo:看不太懂
     distributed = comm.get_world_size() > 1
     if distributed:
         model = DistributedDataParallel(
@@ -189,6 +190,8 @@ def main(args):
 
 def invoke_main() -> None:
     args = default_argument_parser().parse_args()
+    args.config_file = "./configs/train_cityscapes_config.yaml"
+    print(MetadataCatalog.list())
     print("Command Line Args:", args)
     launch(
         main,
