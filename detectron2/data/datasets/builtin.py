@@ -22,7 +22,7 @@ import os
 from detectron2.data import DatasetCatalog, MetadataCatalog
 
 from .builtin_meta import ADE20K_SEM_SEG_CATEGORIES, _get_builtin_metadata
-from .cityscapes import load_cityscapes_instances, load_cityscapes_semantic, load_cityscapes_instances_detection
+from .cityscapes import load_cityscapes_instances, load_cityscapes_semantic
 from .cityscapes_panoptic import register_all_cityscapes_panoptic
 from .coco import load_sem_seg, register_coco_instances
 from .coco_panoptic import register_coco_panoptic, register_coco_panoptic_separated
@@ -251,7 +251,10 @@ def register_cityscapes_detection(root):
     gt_dir = _root + '/gtFine/'
 
     for d in ["train", "val", "test"]:
-        DatasetCatalog.register(root + d, lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances_detection(x, y))
+        DatasetCatalog.register(root + d,
+                                lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances(
+                                    x, y, from_json=True, to_polygons=True
+                                ))
         MetadataCatalog.get(root + d).set(thing_classes=class_names, evaluator_type="coco")
 
 

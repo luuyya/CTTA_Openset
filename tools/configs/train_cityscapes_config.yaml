@@ -1,4 +1,4 @@
-_BASE_: "../configs/PascalVOC-Detection/faster_rcnn_R_50_FPN.yaml"
+_BASE_: "../../configs/PascalVOC-Detection/faster_rcnn_R_50_FPN.yaml"
 MODEL:
   ROI_HEADS:
     NUM_CLASSES: 8
