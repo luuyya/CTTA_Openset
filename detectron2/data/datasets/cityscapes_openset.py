@@ -24,7 +24,16 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 def _get_cityscapes_files(image_dir, gt_dir):
-    # 和test一样
+    """
+
+    Args:
+        image_dir: 像素照片地址
+        gt_dir: 标注文件地址
+
+    Returns:
+        一个列表，表中将 图片、instance、label和ploygons匹配存储
+
+    """
     files = []
     # scan through the directory
     cities = PathManager.ls(image_dir)
@@ -52,16 +61,15 @@ def _get_cityscapes_files(image_dir, gt_dir):
 
 def load_cityscapes_instances(image_dir, gt_dir, from_json=True, to_polygons=True):
     """
+
     Args:
-        image_dir (str): path to the raw dataset. e.g., "~/cityscapes/leftImg8bit/train".
-        gt_dir (str): path to the raw annotations. e.g., "~/cityscapes/gtFine/train".
-        from_json (bool): whether to read annotations from the raw json file or the png files.
-        to_polygons (bool): whether to represent the segmentation as polygons
-            (COCO's format) instead of masks (cityscapes's format).
+        image_dir: 像素照片地址
+        gt_dir: 标注文件地址
+        from_json:
+        to_polygons:
 
     Returns:
-        list[dict]: a list of dicts in Detectron2 standard format. (See
-        `Using Custom Datasets </tutorials/datasets.html>`_ )
+
     """
     # 基本一样，应该可以运行
     if from_json:
@@ -76,7 +84,7 @@ def load_cityscapes_instances(image_dir, gt_dir, from_json=True, to_polygons=Tru
     # take up to 10m on a 8GPU server.
     pool = mp.Pool(processes=max(mp.cpu_count() // get_world_size() // 2, 4))
 
-    ret = pool.map( #todo:多了两个参数输入
+    ret = pool.map( #多了两个参数输入
         functools.partial(_cityscapes_files_to_dict, from_json=from_json, to_polygons=to_polygons),
         files,
     )
@@ -158,14 +166,8 @@ def _cityscapes_files_to_dict(files, from_json, to_polygons):
             "width": jsonobj["imgWidth"],
         }
 
-        # `polygons_union` contains the union of all valid polygons.
         polygons_union = Polygon()
 
-        # CityscapesScripts draw the polygons in sequential order
-        # and each polygon *overwrites* existing ones. See
-        # (https://github.com/mcordts/cityscapesScripts/blob/master/cityscapesscripts/preparation/json2instanceImg.py) # noqa
-        # We use reverse order, and each polygon *avoids* early ones.
-        # This will resolve the ploygon overlaps in the same way as CityscapesScripts.
         for obj in jsonobj["objects"][::-1]:
             if "deleted" in obj:  # cityscapes data format specific
                 continue
@@ -181,14 +183,7 @@ def _cityscapes_files_to_dict(files, from_json, to_polygons):
             if label.id < 0:  # cityscapes data format
                 continue
 
-            # Cityscapes's raw annotations uses integer coordinates
-            # Therefore +0.5 here
             poly_coord = np.asarray(obj["polygon"], dtype="f4") + 0.5
-            # CityscapesScript uses PIL.ImageDraw.polygon to rasterize
-            # polygons for evaluation. This function operates in integer space
-            # and draws each pixel whose center falls into the polygon.
-            # Therefore it draws a polygon which is 0.5 "fatter" in expectation.
-            # We therefore dilate the input polygon by 0.5 as our input.
             poly = Polygon(poly_coord).buffer(0.5, resolution=4)
 
             if not label.hasInstances or label.ignoreInEval:
