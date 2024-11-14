@@ -24,6 +24,20 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+def _get_name2id_dict():
+    openset_name2id={
+        'unknown':-1,
+        'person':1,
+        'car':2,
+        'train':3,
+        'rider':4,
+        'truck':5,
+        'motorcycle':6,
+        'bicycle':7,
+        'bus':8
+    }
+    return openset_name2id
+
 def _get_cityscapes_files(image_dir, gt_dir):
     """
 
@@ -166,7 +180,7 @@ def _cityscapes_files_to_dict(files, openset_setting, from_json, to_polygons, is
 
             anno = {}
             anno["iscrowd"] = label_name.endswith("group")
-            anno["category_id"] = label.id
+            anno["category_id"] = _get_name2id_dict()[label.name]
 
             if isinstance(poly_wo_overlaps, Polygon):
                 poly_list = [poly_wo_overlaps]
@@ -187,13 +201,13 @@ def _cityscapes_files_to_dict(files, openset_setting, from_json, to_polygons, is
             BASE_CLASSES, NOVEL_CLASSES, ALL_CLASSES, CLASS_NAMES = get_openset_settings_cityscapes(openset_setting)
 
             if is_train:
-                if label_name in BASE_CLASSES:
+                if label.name in BASE_CLASSES:
                     annos.append(anno)
             else:
-                if label_name in BASE_CLASSES:
+                if label.name in BASE_CLASSES:
                     annos.append(anno)
                 else:
-                    anno['category_id']=label.id #todo:add unknown id https://blog.csdn.net/talender/article/details/103254073
+                    anno['category_id']=_get_name2id_dict()['unknown']
                     annos.append(anno)
 
     else:
@@ -271,6 +285,7 @@ def get_openset_settings_cityscapes(setting):
     CLASS_NAMES = tuple(BASE_CLASSES+UNK)
 
     return BASE_CLASSES, NOVEL_CLASSES, ALL_CLASSES, CLASS_NAMES
+
 
 
 # def main() -> None:

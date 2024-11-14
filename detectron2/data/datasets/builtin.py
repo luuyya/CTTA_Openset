@@ -28,6 +28,7 @@ from .coco import load_sem_seg, register_coco_instances
 from .coco_panoptic import register_coco_panoptic, register_coco_panoptic_separated
 from .lvis import get_lvis_instances_meta, register_lvis_instances
 from .pascal_voc import register_pascal_voc
+from .cityscapes_openset import load_cityscapes_instances_openset,get_openset_settings_cityscapes
 
 # ==== Predefined datasets and splits for COCO ==========
 
@@ -257,6 +258,31 @@ def register_cityscapes_detection(root):
                                 ))
         MetadataCatalog.get(root + d).set(thing_classes=class_names, evaluator_type="coco")
 
+def register_cityscapes_openset_detection(root):
+    id2task_name = {
+        1: 'het-sem',
+        2: 'hom-sem',
+        3: 'freq-dec',
+        4: 'freq-inc'
+    }
+    image_dir = _root + '/leftImg8bit/'
+    gt_dir = _root + '/gtFine/'
+    for openset_setting in range(1,5):
+        BASE_CLASSES, NOVEL_CLASSES, ALL_CLASSES, CLASS_NAMES = get_openset_settings_cityscapes(openset_setting)
+        task_name = id2task_name[openset_setting]
+        for d in ["train", "val", "test"]:
+            DatasetCatalog.register(root + d+'_'+task_name,
+                                    lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances(
+                                        x, y, from_json=True, to_polygons=True
+                                    ))
+
+            class_name=None
+            if d=='train':
+                class_name=BASE_CLASSES
+            else:
+                class_name=CLASS_NAMES
+            MetadataCatalog.get(root + d+'_'+task_name).set(thing_classes=tuple(class_name), evaluator_type="coco")
+
 
 # True for open source;
 # Internally at fb, we register them elsewhere
@@ -271,4 +297,5 @@ if __name__.endswith(".builtin"):
     # register_all_ade20k(_root)
 
     _root = os.path.expanduser(os.getenv("DETECTRON2_DATASETS", "~/data_city"))
-    register_cityscapes_detection('cityscape_openset')
+    register_cityscapes_detection('cityscape')
+    register_cityscapes_openset_detection('cityscape_openset')
