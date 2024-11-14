@@ -1,18 +1,37 @@
+#!/usr/bin/env python
+# Copyright (c) Facebook, Inc. and its affiliates.
 """
-使用函数进行训练
-框架较为简单
+Detectron2 training script with a plain training loop.
+
+This script reads a given config file and runs the training or evaluation.
+It is an entry point that is able to train standard models in detectron2.
+
+In order to let one script support training of many models,
+this script contains logic that are specific to these built-in models and therefore
+may not be suitable for your own project.
+For example, your research project perhaps only needs a single "evaluator".
+
+Therefore, we recommend you to use detectron2 as a library and take
+this file as an example of how to use the library.
+You may want to write your own script with your datasets and other customizations.
+
+Compared to "train_net.py", this script supports fewer default features.
+It also includes fewer abstraction, therefore is easier to add custom logic.
 """
+# 可视化！！
 import logging
 import os
 from collections import OrderedDict
 import torch
 from torch.nn.parallel import DistributedDataParallel
-
+from detectron2.utils.visualizer import Visualizer
 import detectron2.utils.comm as comm
 from detectron2.checkpoint import DetectionCheckpointer, PeriodicCheckpointer
+from contextlib import ExitStack
 from detectron2.config import get_cfg
 from detectron2.data import (
     MetadataCatalog,
+    DatasetCatalog,
     build_detection_test_loader,
     build_detection_train_loader,
 )
@@ -32,9 +51,10 @@ from detectron2.evaluation import (
 from detectron2.modeling import build_model
 from detectron2.solver import build_lr_scheduler, build_optimizer
 from detectron2.utils.events import EventStorage
+# from detectron2.data.datasets import register_pascal_voc, register_ACDC_instances, register_cityscape
+import cv2
 
 logger = logging.getLogger("detectron2")
-
 
 def get_evaluator(cfg, dataset_name, output_folder=None):
     """
@@ -56,7 +76,7 @@ def get_evaluator(cfg, dataset_name, output_folder=None):
             )
         )
     if evaluator_type in ["coco", "coco_panoptic_seg"]:
-        evaluator_list.append(COCOEvaluator(dataset_name, output_dir=output_folder))
+        evaluator_list.append(COCOEvaluator(dataset_name, output_dir=output_folder, allow_cached_coco=False))
     if evaluator_type == "coco_panoptic_seg":
         evaluator_list.append(COCOPanopticEvaluator(dataset_name, output_folder))
     if evaluator_type == "cityscapes_instance":
@@ -83,7 +103,7 @@ def do_test(cfg, model):
         evaluator = get_evaluator(
             cfg, dataset_name, os.path.join(cfg.OUTPUT_DIR, "inference", dataset_name)
         )
-        results_i = inference_on_dataset(model, data_loader, evaluator) #进行模型测试
+        results_i = inference_on_dataset(model, data_loader, evaluator)
         results[dataset_name] = results_i
         if comm.is_main_process():
             logger.info("Evaluation results for {} in csv format:".format(dataset_name))
@@ -98,11 +118,11 @@ def do_train(cfg, model, resume=False):
     optimizer = build_optimizer(cfg, model)
     scheduler = build_lr_scheduler(cfg, optimizer)
 
-    checkpointer = DetectionCheckpointer( #定义模型checkpoint
+    checkpointer = DetectionCheckpointer(
         model, cfg.OUTPUT_DIR, optimizer=optimizer, scheduler=scheduler
     )
     start_iter = (
-        checkpointer.resume_or_load(cfg.MODEL.WEIGHTS, resume=resume).get("iteration", -1) + 1
+            checkpointer.resume_or_load(cfg.MODEL.WEIGHTS, resume=resume).get("iteration", -1) + 1
     )
     max_iter = cfg.SOLVER.MAX_ITER
 
@@ -112,42 +132,17 @@ def do_train(cfg, model, resume=False):
 
     writers = default_writers(cfg.OUTPUT_DIR, max_iter) if comm.is_main_process() else []
 
+    # compared to "train_net.py", we do not support accurate timing and
+    # precise BN here, because they are not trivial to implement in a small training loop
     data_loader = build_detection_train_loader(cfg)
     logger.info("Starting training from iteration {}".format(start_iter))
     with EventStorage(start_iter) as storage:
         for data, iteration in zip(data_loader, range(start_iter, max_iter)):
             storage.iter = iteration
 
-            loss_dict = model(data) #前向传播
-            losses = sum(loss_dict.values())
-            assert torch.isfinite(losses).all(), loss_dict
-
-            loss_dict_reduced = {k: v.item() for k, v in comm.reduce_dict(loss_dict).items()}
-            losses_reduced = sum(loss for loss in loss_dict_reduced.values())
-            if comm.is_main_process():
-                storage.put_scalars(total_loss=losses_reduced, **loss_dict_reduced)
-
-            optimizer.zero_grad()
-            losses.backward()
-            optimizer.step()
-            storage.put_scalar("lr", optimizer.param_groups[0]["lr"], smoothing_hint=False)
-            scheduler.step()
-
-            if (
-                cfg.TEST.EVAL_PERIOD > 0
-                and (iteration + 1) % cfg.TEST.EVAL_PERIOD == 0
-                and iteration != max_iter - 1
-            ):
-                do_test(cfg, model)
-                # Compared to "train_net.py", the test results are not dumped to EventStorage
-                comm.synchronize()
-
-            if iteration - start_iter > 5 and (
-                (iteration + 1) % 20 == 0 or iteration == max_iter - 1
-            ):
-                for writer in writers:
-                    writer.write()
-            periodic_checkpointer.step(iteration)
+            out = model(data)
+            print(out)
+            break
 
 
 def setup(args):
@@ -155,8 +150,10 @@ def setup(args):
     Create configs and perform basic setups.
     """
     cfg = get_cfg()
+    args.config_file = "/public/home/caoshilei/test/detectron2/tools/cfg.yaml"
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
+    cfg.SOLVER.IMS_PER_BATCH = 1
     cfg.freeze()
     default_setup(
         cfg, args
@@ -164,33 +161,62 @@ def setup(args):
     return cfg
 
 
+def adaptAndEval(model, data_loader, evaluator):
+    evaluator.reset()
+    for iter, data in enumerate(data_loader):
+        outputs = model(data)
+        evaluator.process(data, outputs)
+
+    return evaluator.evaluate()
+
+
 def main(args):
     cfg = setup(args)
+    register_cityscape("Train", "/public/home/caoshilei/test/detectron2/datasets/cityscapes", "train_s")
+    register_cityscape("Test", "/public/home/caoshilei/test/detectron2/datasets/cityscapes", "test_s")
 
     model = build_model(cfg)
     logger.info("Model:\n{}".format(model))
     if args.eval_only:
         DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
-            cfg.MODEL.WEIGHTS, resume=args.resume
+            cfg.MODEL.WEIGHTS, resume=True
         )
-        return do_test(cfg, model)
+        model.eval()
+    # data_loader = build_detection_train_loader(cfg)
+    dataSet = cfg.DATASETS.TEST[0]
+    data_loader = build_detection_test_loader(cfg, dataSet)
 
-    # todo:看不太懂
-    distributed = comm.get_world_size() > 1
-    if distributed:
-        model = DistributedDataParallel(
-            model, device_ids=[comm.get_local_rank()], broadcast_buffers=False
-        )
+    for iter, data in enumerate(data_loader):
+        outputs = model(data)
+        image = cv2.imread(data[0]["file_name"])
+        v1 = Visualizer(image[:, :, ::-1], MetadataCatalog.get(dataSet), scale=1.2)
+        out = v1.draw_instance_predictions(outputs[0]["instances"].to("cpu"))
+        cv2.imwrite("output.jpg", out.get_image()[:, :, ::-1])
+        dataDict = [d for d in DatasetCatalog.get(dataSet) if d["file_name"] == data[0]["file_name"]][0]
+        v2 = Visualizer(image[:, :, ::-1], MetadataCatalog.get(dataSet), scale=1.2)
+        gt = v2.draw_dataset_dict(dataDict)
+        cv2.imwrite("gt.jpg", gt.get_image()[:, :, ::-1])
 
-    do_train(cfg, model, resume=args.resume)
-    return do_test(cfg, model)
+    # data_loaders = [build_detection_test_loader(cfg, datasetName) for datasetName in cfg.DATASETS.TEST]
+
+    # evaluators = [get_evaluator(cfg, datasetName, os.path.join(cfg.OUTPUT_DIR, "inference", datasetName)) for datasetName in cfg.DATASETS.TEST]
+    # # evaluator.reset()
+    # with ExitStack() as stack:
+    #     stack.enter_context(torch.no_grad())
+    #     for epoch in range(1):
+    #         print("epoch:", epoch)
+    #         results = OrderedDict()
+    #         for iter, data_loader, evaluator in zip(range(len(data_loaders)), data_loaders, evaluators):
+    #             print("dataSet:", iter)
+    #             evaluator.reset()
+    #             result = adaptAndEval(model, data_loader, evaluator)
+    #             results[iter] = result
+    #             break
+    #         print(results)
 
 
-def invoke_main() -> None:
+if __name__ == "__main__":
     args = default_argument_parser().parse_args()
-    args.config_file = "./configs/train_cityscapes_config.yaml"
-    print(MetadataCatalog.list())
-    # print(MetadataCatalog.get('cityscape_opensetval_het-sem'))
     print("Command Line Args:", args)
     launch(
         main,
@@ -200,7 +226,3 @@ def invoke_main() -> None:
         dist_url=args.dist_url,
         args=(args,),
     )
-
-
-if __name__ == "__main__":
-    invoke_main()  # pragma: no cover
