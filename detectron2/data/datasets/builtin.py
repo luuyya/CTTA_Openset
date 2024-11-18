@@ -256,6 +256,8 @@ def register_cityscapes_detection(root):
                                 lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances(
                                     x, y, from_json=True, to_polygons=True
                                 ))
+
+        # 声明数据集的公共信息，只供编程者使用？
         MetadataCatalog.get(root + d).set(thing_classes=class_names, evaluator_type="coco")
 
 def register_cityscapes_openset_detection(root):

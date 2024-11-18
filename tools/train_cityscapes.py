@@ -123,11 +123,10 @@ def main(args):
             verify_results(cfg, res)
         return res
 
-    """
-    If you'd like to do anything fancier than the standard training logic,
-    consider writing your own training loop (see plain_train_net.py) or
-    subclassing the trainer.
-    """
+
+    # cfg.TEST.AUG.ENABLED和测试时增强有关
+    # （对测试数据进行处理输入模型从而得到更加好的测试结果，不再对模型调整），可以仿照这个类编写CTTA
+
     trainer = Trainer(cfg)
     trainer.resume_or_load(resume=args.resume)
     if cfg.TEST.AUG.ENABLED:
