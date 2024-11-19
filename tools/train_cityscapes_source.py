@@ -1,6 +1,6 @@
 """
 使用train类进行训练
-框架较为复杂
+得到CTTA中的source模型，并附带对source模型进行测试的函数
 """
 import logging
 import os
@@ -113,6 +113,7 @@ def main(args):
 
     if args.eval_only:
         model = Trainer.build_model(cfg)
+        # 恢复最新的模型，设置args.resume=True
         DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
             cfg.MODEL.WEIGHTS, resume=args.resume
         )
@@ -122,10 +123,8 @@ def main(args):
         if comm.is_main_process():
             verify_results(cfg, res)
         return res
-
-
     # cfg.TEST.AUG.ENABLED和测试时增强有关
-    # （对测试数据进行处理输入模型从而得到更加好的测试结果，不再对模型调整），可以仿照这个类编写CTTA
+    # （对测试数据进行处理输入模型从而得到更加好的测试结果，不再对模型调整），不可以仿照这个类编写CTTA
 
     trainer = Trainer(cfg)
     trainer.resume_or_load(resume=args.resume)
@@ -139,6 +138,8 @@ def main(args):
 if __name__ == "__main__":
     args = default_argument_parser().parse_args()
     args.config_file = "./configs/train_cityscapes_config.yaml"
+    # args.resume = True
+    args.num_gpus = 3
     print(MetadataCatalog.list())
     print("Command Line Args:", args)
     launch(
