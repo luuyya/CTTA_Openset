@@ -175,11 +175,14 @@ class GeneralizedRCNN(nn.Module):
         losses.update(proposal_losses)
         return losses
 
+    # 推断过程，进行CTTA
     def inference(
         self,
         batched_inputs: List[Dict[str, torch.Tensor]],
         detected_instances: Optional[List[Instances]] = None,
         do_postprocess: bool = True,
+        mode: str = "eval",
+        strong_aug = False,# 增加参数判断是否需要数据增强，teacher/student
     ):
         """
         Run inference on the given inputs.
@@ -200,7 +203,7 @@ class GeneralizedRCNN(nn.Module):
         """
         assert not self.training
 
-        images = self.preprocess_image(batched_inputs)
+        images = self.preprocess_image(batched_inputs, strong_aug)
         features = self.backbone(images.tensor)
 
         if detected_instances is None:
@@ -215,22 +218,43 @@ class GeneralizedRCNN(nn.Module):
             detected_instances = [x.to(self.device) for x in detected_instances]
             results = self.roi_heads.forward_with_given_boxes(features, detected_instances)
 
-        if do_postprocess:
+        # if do_postprocess:
+        #     assert not torch.jit.is_scripting(), "Scripting is not supported for postprocess."
+        #     return GeneralizedRCNN._postprocess(results, batched_inputs, images.image_sizes)
+        # return results
+        if do_postprocess and mode == "eval":
             assert not torch.jit.is_scripting(), "Scripting is not supported for postprocess."
             return GeneralizedRCNN._postprocess(results, batched_inputs, images.image_sizes)
-        return results
+        elif (not do_postprocess) and mode == "eval":
+            return results
+        # elif mode == "memclr":
+        #     assert not torch.jit.is_scripting(), "Scripting is not supported for postprocess."
+        #     return features, proposals, results, GeneralizedRCNN._postprocess(deepcopy(results), batched_inputs, images.image_sizes)
+        elif mode == "cotta":
+            assert not torch.jit.is_scripting(), "Scripting is not supported for postprocess."
+            return results, GeneralizedRCNN._postprocess(results, batched_inputs, images.image_sizes)
 
-    def preprocess_image(self, batched_inputs: List[Dict[str, torch.Tensor]]):
+
+    def preprocess_image(self, batched_inputs: List[Dict[str, torch.Tensor]], strong_aug = False):
         """
         Normalize, pad and batch the input images.
         """
-        images = [self._move_to_current_device(x["image"]) for x in batched_inputs]
-        images = [(x - self.pixel_mean) / self.pixel_std for x in images]
-        images = ImageList.from_tensors(
-            images,
-            self.backbone.size_divisibility,
-            padding_constraints=self.backbone.padding_constraints,
-        )
+        if strong_aug:
+            images = [self._move_to_current_device(x["image_strong"]) for x in batched_inputs]
+            images = [(x - self.pixel_mean) / self.pixel_std for x in images]
+            images = ImageList.from_tensors(
+                images,
+                self.backbone.size_divisibility,
+                padding_constraints=self.backbone.padding_constraints,
+            )
+        else:
+            images = [self._move_to_current_device(x["image"]) for x in batched_inputs]
+            images = [(x - self.pixel_mean) / self.pixel_std for x in images]
+            images = ImageList.from_tensors(
+                images,
+                self.backbone.size_divisibility,
+                padding_constraints=self.backbone.padding_constraints,
+            )
         return images
 
     @staticmethod
