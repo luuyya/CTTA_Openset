@@ -29,7 +29,7 @@ def parse_args(in_args=None):
     parser.add_argument(
         "--source",
         choices=["annotation", "dataloader"],
-        required=True,
+        required=False,
         help="visualize the annotations or the data loader (with pre-processing)",
     )
     parser.add_argument("--config-file", metavar="FILE", help="path to config file")
@@ -47,6 +47,9 @@ def parse_args(in_args=None):
 def main() -> None:
     global img
     args = parse_args()
+    args.source = 'dataloader'
+    args.output_dir = "/public/home/luya/test_output"
+    args.config_file = "./configs/train_cityscapes_config.yaml"
     logger = setup_logger()
     logger.info("Arguments: " + str(args))
     cfg = setup(args)

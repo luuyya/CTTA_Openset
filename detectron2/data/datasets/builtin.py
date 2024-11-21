@@ -274,7 +274,7 @@ def register_cityscapes_openset_detection(root):
         task_name = id2task_name[openset_setting]
         for d in ["train", "val", "test"]:
             DatasetCatalog.register(root + d+'_'+task_name,
-                                    lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances(
+                                    lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances_openset(
                                         x, y, from_json=True, to_polygons=True
                                     ))
 

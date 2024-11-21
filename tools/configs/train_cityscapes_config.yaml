@@ -2,10 +2,19 @@ _BASE_: "../../configs/PascalVOC-Detection/faster_rcnn_R_50_FPN.yaml"
 MODEL:
   ROI_HEADS:
     NUM_CLASSES: 8
-
+#1:'het-sem' ['car', 'truck', 'bus'] ['person', 'motorcycle', 'train', 'bicycle', 'rider']
+#2: 'hom-sem',['person', 'bicycle', 'bus']['car', 'truck', 'train', 'motorcycle', 'rider']
+#3: 'freq-dec',['person', 'car', 'rider']['bicycle', 'train', 'truck', 'motorcycle', 'bus']
+#4: 'freq-inc',['motorcycle', 'truck', 'bus']['person', 'train', 'car', 'bicycle', 'rider']
 DATASETS:
-  TRAIN: ("cityscape_opensettrain",)
-  TEST: ('cityscape_opensetval', 'cityscape_opensettest')
+  TRAIN: ('cityscape_opensettrain_het-sem',)
+  TEST: ('cityscape_opensetval_het-sem', 'cityscape_opensettest_het-sem')
+  # TRAIN: ('cityscape_opensettrain_hom-sem',)
+  # TEST: ('cityscape_opensetval_hom-sem', 'cityscape_opensettest_hom-sem')
+  # TRAIN: ('cityscape_opensettrain_freq-dec',)
+  # TEST: ('cityscape_opensetval_freq-dec', 'cityscape_opensettest_freq-dec')
+  # TRAIN: ('cityscape_opensettrain_freq-inc',)
+  # TEST: ('cityscape_opensetval_freq-inc', 'cityscape_opensettest_freq-inc')
 SOLVER:
   BASE_LR: 0.001
   WEIGHT_DECAY: 0.0001
