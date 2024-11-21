@@ -79,30 +79,11 @@ def get_evaluator(cfg, dataset_name, output_folder=None):
     return DatasetEvaluators(evaluator_list)
 
 
-def do_test(cfg, model):
-    results = OrderedDict()
-    for dataset_name in cfg.DATASETS.TEST:
-        data_loader = build_detection_test_loader(cfg, dataset_name)
-        evaluator = get_evaluator(
-            cfg, dataset_name, os.path.join(cfg.OUTPUT_DIR, "inference", dataset_name)
-        )
-        results_i = inference_on_dataset(model, data_loader, evaluator)
-        results[dataset_name] = results_i
-        if comm.is_main_process():
-            logger.info("Evaluation results for {} in csv format:".format(dataset_name))
-            print_csv_format(results_i)
-    if len(results) == 1:
-        results = list(results.values())[0]
-    return results
-
-
 def setup(args):
     """
     Create configs and perform basic setups.
     """
     cfg = get_cfg()
-    # args.config_file = "/share/home/caoshilei/test/detectron2/tools/cfg_ctaod.yaml"
-    # args.eval_only = True
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     cfg.SOLVER.IMS_PER_BATCH = 1
@@ -114,7 +95,6 @@ def setup(args):
 
 
 def adaptAndEval(model, data_loader, evaluator):
-    evaluator.reset()
     with EventStorage() as storage:
         for iter, data in enumerate(data_loader):
             outputs = model.forward(data)
@@ -138,13 +118,12 @@ def main(args):
     results = []
     epochs = 10
 
-    if not cfg.MODEL.USE_SOURCE:
+    if not cfg.MODEL.USE_SOURCE:# 很奇怪的一点，在cao中为何不调用最新的模型
         DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
             cfg.MODEL.WEIGHTS, resume=True
         )
-        epochs = 1
-        # model.eval()
 
+    # 用于保存模型
     if cfg.DATASETS.TEST[0] == "c_fog" or cfg.DATASETS.TEST[0] == "fog":
         datasetName = "C"
     elif cfg.DATASETS.TEST[0] == "gaussian_noise":
@@ -161,11 +140,13 @@ def main(args):
     else:
         fileName = f"{cfg.MODEL.META_ARCHITECTURE}(-{datasetName} mt-{model.mt}).xlsx"
 
+
     for epoch in range(epochs):
         one_round_result = OrderedDict()
         for iter, data_loader, evaluator in zip(range(len(data_loaders)), data_loaders, evaluators):
             print("epoch:", epoch, ", dataSet:", iter)
             evaluator.reset()
+            # 进入ctta
             result = adaptAndEval(model, data_loader, evaluator)
             one_round_result[cfg.DATASETS.TEST[iter]] = result
             AP50_Sum += result['bbox']['AP50']

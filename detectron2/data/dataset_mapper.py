@@ -10,6 +10,8 @@ from detectron2.config import configurable
 from . import detection_utils as utils
 from . import transforms as T
 
+from PIL import Image
+
 """
 This file contains the default mapping that's applied to "dataset dicts".
 """
@@ -77,6 +79,10 @@ class DatasetMapper:
         self.keypoint_hflip_indices = keypoint_hflip_indices
         self.proposal_topk          = precomputed_proposal_topk
         self.recompute_boxes        = recompute_boxes
+
+        # todo:可以完善，写的更加美观
+        self.strong_augmentation = utils.build_strong_augmentation(is_train)
+
         # fmt: on
         logger = logging.getLogger(__name__)
         mode = "training" if is_train else "inference"
@@ -169,6 +175,14 @@ class DatasetMapper:
         # but not efficient on large generic data structures due to the use of pickle & mp.Queue.
         # Therefore it's important to use torch.Tensor.
         dataset_dict["image"] = torch.as_tensor(np.ascontiguousarray(image.transpose(2, 0, 1)))
+
+        image_pil = Image.fromarray(image.astype("uint8"), "RGB")
+        image_strong_aug = np.array(self.strong_augmentation(image_pil))
+
+        dataset_dict["image_strong"] = torch.as_tensor(
+            np.ascontiguousarray(image_strong_aug.transpose(2, 0, 1))
+        )
+
         if sem_seg_gt is not None:
             dataset_dict["sem_seg"] = torch.as_tensor(sem_seg_gt.astype("long"))
 

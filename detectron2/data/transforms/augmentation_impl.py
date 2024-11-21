@@ -25,6 +25,8 @@ from detectron2.structures import Boxes, pairwise_iou
 from .augmentation import Augmentation, _transform_to_aug
 from .transform import ExtentTransform, ResizeTransform, RotationTransform
 
+from PIL import Image, ImageFilter
+
 __all__ = [
     "FixedSizeCrop",
     "RandomApply",
@@ -130,6 +132,21 @@ class Resize(Augmentation):
             image.shape[0], image.shape[1], self.shape[0], self.shape[1], self.interp
         )
 
+class GaussianBlur:
+    """
+    Gaussian blur augmentation in SimCLR https://arxiv.org/abs/2002.05709
+    Adapted from MoCo:
+    https://github.com/facebookresearch/moco/blob/master/moco/loader.py
+    Note that this implementation does not seem to be exactly the same as
+    described in SimCLR.
+    """
+    def __init__(self, sigma=[0.1, 2.0]):
+        self.sigma = sigma
+
+    def __call__(self, x):#todo:不规范应该重写get_transform函数
+        sigma = random.uniform(self.sigma[0], self.sigma[1])
+        x = x.filter(ImageFilter.GaussianBlur(radius=sigma))
+        return x
 
 class ResizeShortestEdge(Augmentation):
     """
