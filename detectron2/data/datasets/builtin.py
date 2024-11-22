@@ -28,7 +28,7 @@ from .coco import load_sem_seg, register_coco_instances
 from .coco_panoptic import register_coco_panoptic, register_coco_panoptic_separated
 from .lvis import get_lvis_instances_meta, register_lvis_instances
 from .pascal_voc import register_pascal_voc
-from .cityscapes_openset import load_cityscapes_instances_openset,get_openset_settings_cityscapes
+from .cityscapes_openset import load_cityscapes_instances_openset,get_openset_cityscapes_class
 
 # ==== Predefined datasets and splits for COCO ==========
 
@@ -270,19 +270,21 @@ def register_cityscapes_openset_detection(root):
     image_dir = _root + '/leftImg8bit/'
     gt_dir = _root + '/gtFine/'
     for openset_setting in range(1,5):
-        BASE_CLASSES, NOVEL_CLASSES, ALL_CLASSES, CLASS_NAMES = get_openset_settings_cityscapes(openset_setting)
         task_name = id2task_name[openset_setting]
         for d in ["train", "val", "test"]:
-            DatasetCatalog.register(root + d+'_'+task_name,
-                                    lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances_openset(
-                                        x, y, from_json=True, to_polygons=True
-                                    ))
-
-            class_name=None
-            if d=='train':
-                class_name=BASE_CLASSES
+            is_train=(d=='train')
+            if is_train:
+                DatasetCatalog.register(root + d+'_'+task_name,
+                                        lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances_openset(
+                                            x, y, from_json=True, to_polygons=True, is_train=True
+                                        ))
             else:
-                class_name=CLASS_NAMES
+                 DatasetCatalog.register(root + d+'_'+task_name,
+                                        lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances_openset(
+                                            x, y, from_json=True, to_polygons=True, is_train=False
+                                        ))  # 函数只应该有一个输入，所以不能吧is_train当作变量
+
+            class_name=get_openset_cityscapes_class(openset_setting, is_train)
             MetadataCatalog.get(root + d+'_'+task_name).set(thing_classes=tuple(class_name), evaluator_type="coco")
 
 

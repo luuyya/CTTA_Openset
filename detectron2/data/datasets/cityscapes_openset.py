@@ -26,17 +26,25 @@ logger = logging.getLogger(__name__)
 
 def _get_name2id_dict():
     openset_name2id={
-        'unknown':-1,
-        'person':1,
-        'car':2,
-        'train':3,
-        'rider':4,
-        'truck':5,
-        'motorcycle':6,
-        'bicycle':7,
-        'bus':8
+        'person':0,
+        'car':1,
+        'train':2,
+        'rider':3,
+        'truck':4,
+        'motorcycle':5,
+        'bicycle':6,
+        'bus':7,
+        'unknown':8
     }
     return openset_name2id
+
+def get_openset_cityscapes_class(openset_setting, is_train):
+    BASE_CLASSES, NOVEL_CLASSES, ALL_CLASSES, CLASS_NAMES = get_openset_settings_cityscapes(openset_setting)
+    if is_train:
+        class_name = BASE_CLASSES
+    else:
+        class_name = CLASS_NAMES
+    return class_name
 
 def _get_cityscapes_files(image_dir, gt_dir):
     """
@@ -104,12 +112,13 @@ def load_cityscapes_instances_openset(image_dir, gt_dir, openset_setting=1, from
         files,
     )
     logger.info("Loaded {} images from {}".format(len(ret), image_dir))
+    print(is_train)
+    print('+'*100)
 
-    # Map cityscape ids to contiguous ids
-    from cityscapesscripts.helpers.labels import labels
-
-    labels = [l for l in labels if l.hasInstances and not l.ignoreInEval]
-    dataset_id_to_contiguous_id = {l.id: idx for idx, l in enumerate(labels)}
+    # 得到的索引一定要连续
+    class_name=get_openset_cityscapes_class(openset_setting,is_train)
+    labels = [_get_name2id_dict()[l] for l in class_name]
+    dataset_id_to_contiguous_id = {l: idx for idx, l in enumerate(labels)}
     for dict_per_image in ret:
         for anno in dict_per_image["annotations"]:
             anno["category_id"] = dataset_id_to_contiguous_id[anno["category_id"]]

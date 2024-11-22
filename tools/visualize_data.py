@@ -13,6 +13,8 @@ from detectron2.data.build import filter_images_with_few_keypoints
 from detectron2.utils.logger import setup_logger
 from detectron2.utils.visualizer import Visualizer
 
+print(MetadataCatalog.get('cityscape_opensettrain_het-sem').thing_classes)
+
 
 def setup(args):
     cfg = get_cfg()

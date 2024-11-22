@@ -7,6 +7,10 @@ MODEL:
 #3: 'freq-dec',['person', 'car', 'rider']['bicycle', 'train', 'truck', 'motorcycle', 'bus']
 #4: 'freq-inc',['motorcycle', 'truck', 'bus']['person', 'train', 'car', 'bicycle', 'rider']
 DATASETS:
+  # 未处理的数据
+  # TRAIN: ('cityscapetrain',)
+  # TEST: ('cityscapeval', 'cityscapetest',)
+  # 处理的数据
   TRAIN: ('cityscape_opensettrain_het-sem',)
   TEST: ('cityscape_opensetval_het-sem', 'cityscape_opensettest_het-sem')
   # TRAIN: ('cityscape_opensettrain_hom-sem',)
