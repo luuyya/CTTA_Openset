@@ -103,13 +103,13 @@ class CTAOD(nn.Module):
     @classmethod
     def from_config(cls, cfg):
         model = META_ARCH_REGISTRY.get("GeneralizedRCNN")(cfg)
-        DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
+        DetectionCheckpointer(model, save_dir=cfg.SOURCE_DIR).resume_or_load(
             cfg.MODEL.WEIGHTS, resume=True
         )
         model.to(torch.device(cfg.MODEL.DEVICE))
 
         model_teacher = META_ARCH_REGISTRY.get("GeneralizedRCNN")(cfg)
-        DetectionCheckpointer(model_teacher, save_dir=cfg.OUTPUT_DIR).resume_or_load(
+        DetectionCheckpointer(model_teacher, save_dir=cfg.SOURCE_DIR).resume_or_load(
             cfg.MODEL.WEIGHTS, resume=True
         )
         model_teacher.to(torch.device(cfg.MODEL.DEVICE))

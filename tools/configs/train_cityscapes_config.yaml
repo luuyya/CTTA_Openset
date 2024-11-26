@@ -26,4 +26,4 @@ SOLVER:
   MAX_ITER: 20000
   IMS_PER_BATCH: 64
 
-OUTPUT_DIR: ./output/res50_shift
+OUTPUT_DIR: ./output/res50_het_source
