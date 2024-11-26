@@ -45,4 +45,5 @@ SOLVER:
   SCORE_GAMMA: 0.8
   SCORE_THRESH: 1.4
 
-OUTPUT_DIR: /share/home/caoshilei/test/detectron2/tools/output/res50_fbn_1x
+OUTPUT_DIR: /public/home/luya/code/CTTA_Openset/tools/output/res50_het_ctta
+SOURCE_DIR: /public/home/luya/code/CTTA_Openset/tools/output/res50_het_source

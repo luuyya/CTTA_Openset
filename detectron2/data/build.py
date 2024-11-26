@@ -355,7 +355,8 @@ def build_batch_data_loader(
     if seed is not None:
         generator = torch.Generator()
         generator.manual_seed(seed)
-
+    # import pdb
+    # pdb.set_trace()
     if aspect_ratio_grouping:
         assert drop_last, "Aspect ratio grouping will drop incomplete batches."
         data_loader = torchdata.DataLoader(

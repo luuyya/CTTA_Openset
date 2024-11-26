@@ -139,7 +139,7 @@ if __name__ == "__main__":
     args = default_argument_parser().parse_args()
     args.config_file = "./configs/train_cityscapes_config.yaml"
     # args.resume = True
-    args.num_gpus = 3
+    # args.num_gpus = 3
     print(MetadataCatalog.list())
     print("Command Line Args:", args)
     launch(
