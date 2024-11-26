@@ -20,8 +20,6 @@ except ImportError:
     # OpenCV is an optional dependency at the moment
     pass
 
-#todo: 如何处理unknownid，需要理解数据在模型当中的运作模式，包括类别在其中的作用模式！！！！
-
 logger = logging.getLogger(__name__)
 
 def _get_name2id_dict():
@@ -102,7 +100,7 @@ def load_cityscapes_instances_openset(image_dir, gt_dir, openset_setting=1, from
         )
     files = _get_cityscapes_files(image_dir, gt_dir)
 
-    logger.info("Preprocessing cityscapes annotations ...")
+    logger.info("Preprocessing cityscapes annotations in open-set setting {}...".format(openset_setting))
     # This is still not fast: all workers will execute duplicate works and will
     # take up to 10m on a 8GPU server.
     pool = mp.Pool(processes=max(mp.cpu_count() // get_world_size() // 2, 4))

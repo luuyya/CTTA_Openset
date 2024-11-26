@@ -80,7 +80,7 @@ class DatasetMapper:
         self.proposal_topk          = precomputed_proposal_topk
         self.recompute_boxes        = recompute_boxes
 
-        # todo:可以完善，写的更加美观
+        # 对于每个图片都要存储增强和不增强的格式，便于分别用于teacher和student中
         self.strong_augmentation = utils.build_strong_augmentation(is_train)
 
         # fmt: on
@@ -167,7 +167,7 @@ class DatasetMapper:
             sem_seg_gt = None
 
         aug_input = T.AugInput(image, sem_seg=sem_seg_gt)
-        transforms = self.augmentations(aug_input)
+        transforms = self.augmentations(aug_input) #此处已经进行了变换
         image, sem_seg_gt = aug_input.image, aug_input.sem_seg
 
         image_shape = image.shape[:2]  # h, w

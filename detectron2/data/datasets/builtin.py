@@ -286,7 +286,7 @@ def register_cityscapes_openset_detection(root):
 
             class_name=get_openset_cityscapes_class(openset_setting, is_train)
             MetadataCatalog.get(root + d+'_'+task_name).set(thing_classes=tuple(class_name), evaluator_type="coco")
-
+#todo: 可以删除seg部分加快加载速度
 
 # True for open source;
 # Internally at fb, we register them elsewhere
