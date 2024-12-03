@@ -304,6 +304,17 @@ class PILColorTransform(ColorTransform):
         return np.asarray(super().apply_image(img))
 
 
+class GaussianBlurTransform(Transform):
+    def __init__(self, sigma=[0.1, 2.0]):
+        super().__init__()
+        self.sigma = sigma
+
+    def apply_image(self, x):
+        sigma = random.uniform(self.sigma[0], self.sigma[1])
+        x = x.filter(ImageFilter.GaussianBlur(radius=sigma))
+        return x
+
+
 def HFlip_rotated_box(transform, rotated_boxes):
     """
     Apply the horizontal flip transform on rotated boxes.
