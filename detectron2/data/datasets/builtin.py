@@ -29,6 +29,7 @@ from .coco_panoptic import register_coco_panoptic, register_coco_panoptic_separa
 from .lvis import get_lvis_instances_meta, register_lvis_instances
 from .pascal_voc import register_pascal_voc
 from .cityscapes_openset import load_cityscapes_instances_openset,get_openset_cityscapes_class
+from .ACDC_openset import register_ACDC_instances
 
 # ==== Predefined datasets and splits for COCO ==========
 
@@ -248,8 +249,8 @@ def register_all_ade20k(root):
 
 def register_cityscapes_detection(root):
     class_names=('person', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle')
-    image_dir = _root + '/leftImg8bit/'
-    gt_dir = _root + '/gtFine/'
+    image_dir = _cityscape_root + '/leftImg8bit/'
+    gt_dir = _cityscape_root + '/gtFine/'
 
     for d in ["train", "val", "test"]:
         DatasetCatalog.register(root + d,
@@ -260,33 +261,47 @@ def register_cityscapes_detection(root):
         # 声明数据集的公共信息，只供编程者使用？
         MetadataCatalog.get(root + d).set(thing_classes=class_names, evaluator_type="coco")
 
-def register_cityscapes_openset_detection(root):
-    id2task_name = {
+def id2task_name(id):
+    id2task_name_dict = {
         1: 'het-sem',
         2: 'hom-sem',
         3: 'freq-dec',
         4: 'freq-inc'
     }
-    image_dir = _root + '/leftImg8bit/'
-    gt_dir = _root + '/gtFine/'
+    return id2task_name_dict[id]
+
+def register_cityscapes_openset_detection(dataset_name):
+    image_dir = _cityscape_root + '/leftImg8bit/'
+    gt_dir = _cityscape_root + '/gtFine/'
     for openset_setting in range(1,5):
-        task_name = id2task_name[openset_setting]
+        task_name = id2task_name(openset_setting)
         for d in ["train", "val", "test"]:
             is_train=(d=='train')
             if is_train:
-                DatasetCatalog.register(root + d+'_'+task_name,
+                DatasetCatalog.register(dataset_name + d+'_'+task_name,
                                         lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances_openset(
                                             x, y, from_json=True, to_polygons=True, is_train=True
                                         ))
             else:
-                 DatasetCatalog.register(root + d+'_'+task_name,
+                 DatasetCatalog.register(dataset_name + d+'_'+task_name,
                                         lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances_openset(
                                             x, y, from_json=True, to_polygons=True, is_train=False
                                         ))  # 函数只应该有一个输入，所以不能吧is_train当作变量
 
             class_name=get_openset_cityscapes_class(openset_setting, is_train)
-            MetadataCatalog.get(root + d+'_'+task_name).set(thing_classes=tuple(class_name), evaluator_type="coco")
+            MetadataCatalog.get(dataset_name + d+'_'+task_name).set(thing_classes=tuple(class_name), evaluator_type="coco")
 #todo: 可以删除seg部分加快加载速度
+
+def register_ACDC_instances(dataset_name):
+
+    # 1. register a function which returns dicts
+    DatasetCatalog.register(name, lambda: load_ACDC_json(json_file, image_root, name))
+
+    # 2. Optionally, add metadata about this dataset,
+    # since they might be useful in evaluation, visualization or logging
+    MetadataCatalog.get(name).set(
+        thing_classes=list(CLASS_NAMES), json_file=json_file, image_root=image_root, evaluator_type="coco"
+    )
 
 # True for open source;
 # Internally at fb, we register them elsewhere
@@ -300,6 +315,8 @@ if __name__.endswith(".builtin"):
     # register_all_pascal_voc(_root)
     # register_all_ade20k(_root)
 
-    _root = os.path.expanduser(os.getenv("DETECTRON2_DATASETS", "~/data_city"))
+    _cityscape_root = os.path.expanduser(os.getenv("DETECTRON2_DATASETS", "~/data_city"))
+    _ACDC_root = os.path.expanduser(os.getenv("DETECTRON2_DATASETS", "~/data_ACDC")) #todo 改名
     register_cityscapes_detection('cityscape')
     register_cityscapes_openset_detection('cityscape_openset')
+    register_ACDC_instances('ACDC_openset')

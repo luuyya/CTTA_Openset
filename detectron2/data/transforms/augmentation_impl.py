@@ -23,7 +23,7 @@ from PIL import Image
 from detectron2.structures import Boxes, pairwise_iou
 
 from .augmentation import Augmentation, _transform_to_aug
-from .transform import ExtentTransform, ResizeTransform, RotationTransform
+from .transform import ExtentTransform, ResizeTransform, RotationTransform, PILStrongAugTransform
 
 from PIL import Image, ImageFilter
 
@@ -44,6 +44,7 @@ __all__ = [
     "RandomCrop_CategoryAreaConstraint",
     "RandomResize",
     "MinIoURandomCrop",
+    "StrongAugmentation",
 ]
 
 
@@ -735,3 +736,14 @@ class MinIoURandomCrop(Augmentation):
                     if not mask.any():
                         continue
                 return CropTransform(int(left), int(top), int(new_w), int(new_h))
+
+
+class StrongAugmentation(Augmentation):
+    """
+    call .transform.PILStrongAugTransform to process strong augmentation
+    """
+    def __init__(self, op):
+        self.op = op
+
+    def get_transform(self, image):
+        return PILStrongAugTransform(self.op)

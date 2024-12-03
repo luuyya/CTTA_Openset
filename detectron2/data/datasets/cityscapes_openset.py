@@ -110,8 +110,6 @@ def load_cityscapes_instances_openset(image_dir, gt_dir, openset_setting=1, from
         files,
     )
     logger.info("Loaded {} images from {}".format(len(ret), image_dir))
-    print(is_train)
-    print('+'*100)
 
     # 得到的索引一定要连续
     class_name=get_openset_cityscapes_class(openset_setting,is_train)

@@ -30,6 +30,7 @@ __all__ = [
     "RotationTransform",
     "ColorTransform",
     "PILColorTransform",
+    "PILStrongAugTransform",
 ]
 
 
@@ -303,16 +304,19 @@ class PILColorTransform(ColorTransform):
         img = Image.fromarray(img)
         return np.asarray(super().apply_image(img))
 
+class PILStrongAugTransform(ColorTransform):
+    """
+    getting strong augmentation
+    """
 
-class GaussianBlurTransform(Transform):
-    def __init__(self, sigma=[0.1, 2.0]):
-        super().__init__()
-        self.sigma = sigma
+    def __init__(self, op):
+        if not callable(op):
+            raise ValueError("op parameter should be callable")
+        super().__init__(op)
 
-    def apply_image(self, x):
-        sigma = random.uniform(self.sigma[0], self.sigma[1])
-        x = x.filter(ImageFilter.GaussianBlur(radius=sigma))
-        return x
+    def apply_image(self, img):
+        img = Image.fromarray(img)
+        return np.asarray(super().apply_image(img))
 
 
 def HFlip_rotated_box(transform, rotated_boxes):

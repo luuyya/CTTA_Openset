@@ -81,7 +81,7 @@ class DatasetMapper:
         self.recompute_boxes        = recompute_boxes
 
         # 对于每个图片都要存储增强和不增强的格式，便于分别用于teacher和student中
-        self.strong_augmentation = utils.build_strong_augmentation(is_train)
+        self.strong_augmentation = T.StrongAugmentation(utils.Strong_augmentation_operation(is_train))
 
         # fmt: on
         logger = logging.getLogger(__name__)
@@ -176,11 +176,13 @@ class DatasetMapper:
         # Therefore it's important to use torch.Tensor.
         dataset_dict["image"] = torch.as_tensor(np.ascontiguousarray(image.transpose(2, 0, 1)))
 
-        image_pil = Image.fromarray(image.astype("uint8"), "RGB")
-        image_strong_aug = np.array(self.strong_augmentation(image_pil))
+        # todo: 不知道具体的AugInput的输出形式，可能需要修改
+        strong_aug_input = T.AugInput(image, sem_seg=sem_seg_gt)
+        strong_transform = self.strong_augmentation(strong_aug_input)
+        strong_image, strong_sem_seg_gt = strong_aug_input.image, strong_aug_input.sem_seg
 
         dataset_dict["image_strong"] = torch.as_tensor(
-            np.ascontiguousarray(image_strong_aug.transpose(2, 0, 1))
+            np.ascontiguousarray(strong_image.transpose(2, 0, 1))
         )
 
         if sem_seg_gt is not None:
