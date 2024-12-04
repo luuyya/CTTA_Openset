@@ -25,8 +25,6 @@ from detectron2.structures import Boxes, pairwise_iou
 from .augmentation import Augmentation, _transform_to_aug
 from .transform import ExtentTransform, ResizeTransform, RotationTransform, PILStrongAugTransform
 
-from PIL import Image, ImageFilter
-
 __all__ = [
     "FixedSizeCrop",
     "RandomApply",
