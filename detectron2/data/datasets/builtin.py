@@ -281,13 +281,13 @@ def register_cityscapes_openset_detection(_cityscape_root, dataset_name):
             if is_train:
                 DatasetCatalog.register(dataset_name + d+'_'+task_name,
                                         lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances_openset(
-                                            x, y, from_json=True, to_polygons=True, is_train=True
+                                            x, y, openset_setting, from_json=True, to_polygons=True, is_train=True
                                         ))
             else:
                  DatasetCatalog.register(dataset_name + d+'_'+task_name,
                                         lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances_openset(
-                                            x, y, from_json=True, to_polygons=True, is_train=False
-                                        ))  # 函数只应该有一个输入，所以不能吧is_train当作变量
+                                            x, y, openset_setting, from_json=True, to_polygons=True, is_train=False
+                                        ))  # 函数只应该有一个输入，所以不能吧is_train当作变量 todo:这里很有可能有问题，openset_setting要为定值
 
             class_name=get_openset_cityscapes_class(openset_setting, is_train)
             MetadataCatalog.get(dataset_name + d+'_'+task_name).set(thing_classes=class_name, evaluator_type="coco")
