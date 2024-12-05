@@ -83,7 +83,8 @@ def setup(args):
     Create configs and perform basic setups.
     """
     cfg = get_cfg()
-    args.config_file = "/public/home/caoshilei/test/detectron2/tools/cfg.yaml"
+    # args.config_file = "/public/home/caoshilei/test/detectron2/tools/cfg.yaml"
+    args.config_file = "/public/home/luya/code/CTTA_Openset/tools/configs/train_cityscapes_config.yaml"
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     cfg.SOLVER.IMS_PER_BATCH = 1

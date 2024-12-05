@@ -7,7 +7,7 @@ import cv2
 import tqdm
 
 from detectron2.config import get_cfg
-from detectron2.data import DatasetCatalog, MetadataCatalog, build_detection_train_loader
+from detectron2.data import DatasetCatalog, MetadataCatalog, build_detection_train_loader,build_detection_test_loader
 from detectron2.data import detection_utils as utils
 from detectron2.data.build import filter_images_with_few_keypoints
 from detectron2.utils.logger import setup_logger
@@ -47,10 +47,13 @@ def parse_args(in_args=None):
 
 
 def main() -> None:
+    output_dir1 = "/public/home/luya/test_output1"
+    output_dir2 = "/public/home/luya/test_output2"
+    output_dir3 = "/public/home/luya/test_output3"
     global img
     args = parse_args()
     args.source = 'dataloader'
-    args.output_dir = "/public/home/luya/test_output"
+    args.output_dir = output_dir2
     args.config_file = "./configs/train_cityscapes_config.yaml"
     logger = setup_logger()
     logger.info("Arguments: " + str(args))
@@ -73,7 +76,8 @@ def main() -> None:
     scale = 1.0
     if args.source == "dataloader":
         train_data_loader = build_detection_train_loader(cfg)
-        for batch in train_data_loader:
+        data_loader = train_data_loader
+        for batch in data_loader:
             for per_image in batch:
                 # Pytorch tensor is in (C, H, W) format
                 img = per_image["image"].permute(1, 2, 0).cpu().detach().numpy()

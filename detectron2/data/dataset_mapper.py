@@ -106,7 +106,6 @@ class DatasetMapper:
             "use_keypoint": cfg.MODEL.KEYPOINT_ON,
             "recompute_boxes": recompute_boxes,
         }
-
         if cfg.MODEL.KEYPOINT_ON:
             ret["keypoint_hflip_indices"] = utils.create_keypoint_hflip_indices(cfg.DATASETS.TRAIN)
 
