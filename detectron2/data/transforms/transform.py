@@ -30,6 +30,7 @@ __all__ = [
     "RotationTransform",
     "ColorTransform",
     "PILColorTransform",
+    "PILStrongAugTransform",
 ]
 
 
@@ -295,6 +296,20 @@ class PILColorTransform(ColorTransform):
                 For reference on possible operations see:
                 - https://pillow.readthedocs.io/en/stable/
         """
+        if not callable(op):
+            raise ValueError("op parameter should be callable")
+        super().__init__(op)
+
+    def apply_image(self, img):
+        img = Image.fromarray(img)
+        return np.asarray(super().apply_image(img))
+
+class PILStrongAugTransform(ColorTransform):
+    """
+    getting strong augmentation
+    """
+
+    def __init__(self, op):
         if not callable(op):
             raise ValueError("op parameter should be callable")
         super().__init__(op)

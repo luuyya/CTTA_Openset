@@ -29,6 +29,7 @@ from .coco_panoptic import register_coco_panoptic, register_coco_panoptic_separa
 from .lvis import get_lvis_instances_meta, register_lvis_instances
 from .pascal_voc import register_pascal_voc
 from .cityscapes_openset import load_cityscapes_instances_openset,get_openset_cityscapes_class
+from .ACDC_openset import load_ACDC_json
 
 # ==== Predefined datasets and splits for COCO ==========
 
@@ -246,10 +247,10 @@ def register_all_ade20k(root):
             ignore_label=255,
         )
 
-def register_cityscapes_detection(root):
+def register_cityscapes_detection(_cityscape_root, root):
     class_names=('person', 'rider', 'car', 'truck', 'bus', 'train', 'motorcycle', 'bicycle')
-    image_dir = _root + '/leftImg8bit/'
-    gt_dir = _root + '/gtFine/'
+    image_dir = _cityscape_root + '/leftImg8bit/'
+    gt_dir = _cityscape_root + '/gtFine/'
 
     for d in ["train", "val", "test"]:
         DatasetCatalog.register(root + d,
@@ -260,33 +261,74 @@ def register_cityscapes_detection(root):
         # 声明数据集的公共信息，只供编程者使用？
         MetadataCatalog.get(root + d).set(thing_classes=class_names, evaluator_type="coco")
 
-def register_cityscapes_openset_detection(root):
-    id2task_name = {
+def id2task_name(id):
+    id2task_name_dict = {
         1: 'het-sem',
         2: 'hom-sem',
         3: 'freq-dec',
         4: 'freq-inc'
     }
-    image_dir = _root + '/leftImg8bit/'
-    gt_dir = _root + '/gtFine/'
+    return id2task_name_dict[id]
+
+def register_cityscapes_openset_detection(_cityscape_root, dataset_name):
+    # todo: 可以删除seg部分加快加载速度
+    image_dir = _cityscape_root + '/leftImg8bit/'
+    gt_dir = _cityscape_root + '/gtFine/'
     for openset_setting in range(1,5):
-        task_name = id2task_name[openset_setting]
+        task_name = id2task_name(openset_setting)
         for d in ["train", "val", "test"]:
             is_train=(d=='train')
             if is_train:
-                DatasetCatalog.register(root + d+'_'+task_name,
+                DatasetCatalog.register(dataset_name + d+'_'+task_name,
                                         lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances_openset(
-                                            x, y, from_json=True, to_polygons=True, is_train=True
+                                            x, y, openset_setting, from_json=True, to_polygons=True, is_train=True
                                         ))
             else:
-                 DatasetCatalog.register(root + d+'_'+task_name,
+                 DatasetCatalog.register(dataset_name + d+'_'+task_name,
                                         lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances_openset(
-                                            x, y, from_json=True, to_polygons=True, is_train=False
-                                        ))  # 函数只应该有一个输入，所以不能吧is_train当作变量
+                                            x, y, openset_setting, from_json=True, to_polygons=True, is_train=False
+                                        ))  # 函数只应该有一个输入，所以不能吧is_train当作变量 todo:这里很有可能有问题，openset_setting要为定值
 
             class_name=get_openset_cityscapes_class(openset_setting, is_train)
-            MetadataCatalog.get(root + d+'_'+task_name).set(thing_classes=tuple(class_name), evaluator_type="coco")
+            MetadataCatalog.get(dataset_name + d+'_'+task_name).set(thing_classes=class_name, evaluator_type="coco")
 
+
+def register_ACDC_instances(_ACDC_root, json_path, dataset_name):
+    image_dir = _ACDC_root + '/rgb_anon'
+
+    for openset_setting in range(1, 5):
+        task_name = id2task_name(openset_setting)
+
+        d = None
+        if 'train' in json_path:
+            d='train'
+        elif 'val' in json_path:
+            d='val'
+        elif 'test' in json_path:
+            d='test'
+        else:
+            ValueError(json_path)
+        is_train = (d == 'train')
+
+        if 'fog' in json_path:
+            d='fog'+d
+        elif 'snow' in json_path:
+            d='snow'+d
+        elif 'rain' in json_path:
+            d='rain'+d
+        elif 'night' in json_path:
+            d='night'+d
+        else:
+            ValueError(json_path)
+
+        DatasetCatalog.register(dataset_name + d +'_' + task_name,
+                                lambda: load_ACDC_json(json_path, image_dir, openset_setting, dataset_name, False)
+                                )
+
+        class_name = get_openset_cityscapes_class(openset_setting, False) # use all ACDC data to test
+        MetadataCatalog.get(dataset_name).set(
+            thing_classes=class_name, json_file=json_path, image_root=image_dir, evaluator_type="coco"
+        )
 
 # True for open source;
 # Internally at fb, we register them elsewhere
@@ -300,6 +342,20 @@ if __name__.endswith(".builtin"):
     # register_all_pascal_voc(_root)
     # register_all_ade20k(_root)
 
-    _root = os.path.expanduser(os.getenv("DETECTRON2_DATASETS", "~/data_city"))
-    register_cityscapes_detection('cityscape')
-    register_cityscapes_openset_detection('cityscape_openset')
+    _cityscape_root = os.path.expanduser(os.getenv("DETECTRON2_DATASETS", "~/data_CTTA/data_city"))
+    _ACDC_root = os.path.expanduser(os.getenv("DETECTRON2_DATASETS", "~/data_CTTA/data_ACDC"))
+    register_cityscapes_detection(_cityscape_root,'cityscape')
+    register_cityscapes_openset_detection(_cityscape_root,'cityscape_openset')
+
+    register_ACDC_instances(_ACDC_root,
+                            _ACDC_root + '/gt_detection/fog/instancesonly_fog_train_gt_detection.json',
+                            'ACDC_openset')
+    register_ACDC_instances(_ACDC_root,
+                            _ACDC_root + '/gt_detection/fog/instancesonly_night_train_gt_detection.json',
+                            'ACDC_openset')
+    register_ACDC_instances(_ACDC_root,
+                            _ACDC_root + '/gt_detection/fog/instancesonly_snow_train_gt_detection.json',
+                            'ACDC_openset')
+    register_ACDC_instances(_ACDC_root,
+                            _ACDC_root + '/gt_detection/fog/instancesonly_rain_train_gt_detection.json',
+                            'ACDC_openset')

@@ -1,6 +1,6 @@
 _BASE_: "../../configs/PascalVOC-Detection/faster_rcnn_R_50_FPN.yaml"
 MODEL:
-  USE_SOURCE: False #是否使用source网络或者是使用微调后的网络
+#  USE_SOURCE: False #是否使用source网络或者是使用微调后的网络
   META_ARCHITECTURE: "CTAOD"
   ROI_HEADS:
     NUM_CLASSES: 8
