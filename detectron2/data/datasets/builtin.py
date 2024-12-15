@@ -295,6 +295,8 @@ def register_cityscapes_openset_detection(_cityscape_root, dataset_name):
 
 def register_ACDC_instances(_ACDC_root, json_path, dataset_name):
     image_dir = _ACDC_root + '/rgb_anon'
+    # import pdb
+    # pdb.set_trace()
 
     for openset_setting in range(1, 5):
         task_name = id2task_name(openset_setting)
@@ -310,13 +312,13 @@ def register_ACDC_instances(_ACDC_root, json_path, dataset_name):
             ValueError(json_path)
         is_train = (d == 'train')
 
-        if 'fog' in json_path:
+        if '_fog_' in json_path:
             d='fog'+d
-        elif 'snow' in json_path:
+        elif '_snow_' in json_path:
             d='snow'+d
-        elif 'rain' in json_path:
+        elif '_rain_' in json_path:
             d='rain'+d
-        elif 'night' in json_path:
+        elif '_night_' in json_path:
             d='night'+d
         else:
             ValueError(json_path)
@@ -326,7 +328,7 @@ def register_ACDC_instances(_ACDC_root, json_path, dataset_name):
                                 )
 
         class_name = get_openset_cityscapes_class(openset_setting, False) # use all ACDC data to test
-        MetadataCatalog.get(dataset_name).set(
+        MetadataCatalog.get(dataset_name + d +'_' + task_name).set(
             thing_classes=class_name, json_file=json_path, image_root=image_dir, evaluator_type="coco"
         )
 
@@ -351,11 +353,11 @@ if __name__.endswith(".builtin"):
                             _ACDC_root + '/gt_detection/fog/instancesonly_fog_train_gt_detection.json',
                             'ACDC_openset')
     register_ACDC_instances(_ACDC_root,
-                            _ACDC_root + '/gt_detection/fog/instancesonly_night_train_gt_detection.json',
+                            _ACDC_root + '/gt_detection/night/instancesonly_night_train_gt_detection.json',
                             'ACDC_openset')
     register_ACDC_instances(_ACDC_root,
-                            _ACDC_root + '/gt_detection/fog/instancesonly_snow_train_gt_detection.json',
+                            _ACDC_root + '/gt_detection/rain/instancesonly_rain_train_gt_detection.json',
                             'ACDC_openset')
     register_ACDC_instances(_ACDC_root,
-                            _ACDC_root + '/gt_detection/fog/instancesonly_rain_train_gt_detection.json',
+                            _ACDC_root + '/gt_detection/snow/instancesonly_snow_train_gt_detection.json',
                             'ACDC_openset')

@@ -13,9 +13,6 @@ from detectron2.data.build import filter_images_with_few_keypoints
 from detectron2.utils.logger import setup_logger
 from detectron2.utils.visualizer import Visualizer
 
-print(MetadataCatalog.get('cityscape_opensettrain_het-sem').thing_classes)
-
-
 def setup(args):
     cfg = get_cfg()
     if args.config_file:
@@ -47,13 +44,10 @@ def parse_args(in_args=None):
 
 
 def main() -> None:
-    output_dir1 = "/public/home/luya/test_output1"
-    output_dir2 = "/public/home/luya/test_output2"
-    output_dir3 = "/public/home/luya/test_output3"
     global img
     args = parse_args()
     args.source = 'dataloader'
-    args.output_dir = output_dir2
+    args.output_dir = "/public/home/luya/test_output_ACDC_fog_1"
     args.config_file = "./configs/train_cityscapes_config.yaml"
     logger = setup_logger()
     logger.info("Arguments: " + str(args))
