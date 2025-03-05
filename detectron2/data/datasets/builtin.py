@@ -311,7 +311,6 @@ def register_ACDC_instances(_ACDC_root, json_path, dataset_name):
         # 测试时，设置为False
 
         if '_fog_' in json_path:
-<<<<<<< HEAD
             d = '_fog_'+d
         elif '_snow_' in json_path:
             d = '_snow_'+d
@@ -335,25 +334,6 @@ def register_ACDC_instances(_ACDC_root, json_path, dataset_name):
             json_file=json_path, 
             image_root=image_dir, 
             evaluator_type="coco"
-=======
-            d='fog'+d
-        elif '_snow_' in json_path:
-            d='snow'+d
-        elif '_rain_' in json_path:
-            d='rain'+d
-        elif '_night_' in json_path:
-            d='night'+d
-        else:
-            ValueError(json_path)
-
-        DatasetCatalog.register(dataset_name + d +'_' + task_name,
-                                lambda: load_ACDC_json(json_path, image_dir, openset_setting, dataset_name, False)
-                                )
-
-        class_name = get_openset_cityscapes_class(openset_setting, False) # use all ACDC data to test
-        MetadataCatalog.get(dataset_name + d +'_' + task_name).set(
-            thing_classes=class_name, json_file=json_path, image_root=image_dir, evaluator_type="coco"
->>>>>>> fab70df32805955301f7469b5e16571ac6019883
         )
 
 # True for open source;
