@@ -194,10 +194,10 @@ def _cityscapes_files_to_dict(files, openset_setting, from_json, to_polygons, is
             else:
                 raise NotImplementedError("Unknown geometric structure {}".format(poly_wo_overlaps))
 
-            poly_coord = []
-            for poly_el in poly_list:
-                poly_coord.append(list(chain(*poly_el.exterior.coords)))
-            anno["segmentation"] = poly_coord
+            # poly_coord = []
+            # for poly_el in poly_list:
+            #     poly_coord.append(list(chain(*poly_el.exterior.coords)))
+            # anno["segmentation"] = poly_coord
             (xmin, ymin, xmax, ymax) = poly_wo_overlaps.bounds
 
             anno["bbox"] = (xmin, ymin, xmax, ymax)

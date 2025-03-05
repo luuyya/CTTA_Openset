@@ -270,26 +270,22 @@ def id2task_name(id):
     }
     return id2task_name_dict[id]
 
+
 def register_cityscapes_openset_detection(_cityscape_root, dataset_name):
-    # todo: 可以删除seg部分加快加载速度
     image_dir = _cityscape_root + '/leftImg8bit/'
     gt_dir = _cityscape_root + '/gtFine/'
     for openset_setting in range(1,5):
         task_name = id2task_name(openset_setting)
         for d in ["train", "val", "test"]:
-            is_train=(d=='train')
-            if is_train:
-                DatasetCatalog.register(dataset_name + d+'_'+task_name,
-                                        lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances_openset(
-                                            x, y, openset_setting, from_json=True, to_polygons=True, is_train=True
-                                        ))
-            else:
-                 DatasetCatalog.register(dataset_name + d+'_'+task_name,
-                                        lambda x=image_dir + d, y=gt_dir + d: load_cityscapes_instances_openset(
-                                            x, y, openset_setting, from_json=True, to_polygons=True, is_train=False
-                                        ))  # 函数只应该有一个输入，所以不能吧is_train当作变量 todo:这里很有可能有问题，openset_setting要为定值
-
-            class_name=get_openset_cityscapes_class(openset_setting, is_train)
+            is_train = (d == 'train')
+            DatasetCatalog.register(
+                dataset_name + d + '_' + task_name,
+                lambda x=image_dir + d, y=gt_dir + d, setting=openset_setting, train=is_train: load_cityscapes_instances_openset(
+                    x, y, setting, from_json=True, to_polygons=True, is_train=train
+                )
+            )
+            # todo:对于metadata是否需要设置unknown？
+            class_name = get_openset_cityscapes_class(openset_setting, is_train)
             MetadataCatalog.get(dataset_name + d+'_'+task_name).set(thing_classes=class_name, evaluator_type="coco")
 
 
@@ -300,34 +296,42 @@ def register_ACDC_instances(_ACDC_root, json_path, dataset_name):
         task_name = id2task_name(openset_setting)
 
         d = None
-        if 'train' in json_path:
-            d='train'
-        elif 'val' in json_path:
-            d='val'
-        elif 'test' in json_path:
-            d='test'
+        if '_train_' in json_path:
+            d = 'train'
+        elif '_val_' in json_path:
+            d = 'val'
+        elif '_test_' in json_path:
+            d = 'test'
         else:
             ValueError(json_path)
-        is_train = (d == 'train')
+        # is_train = (d == 'train')
+        is_train = False
+        # 测试时，设置为False
 
-        if 'fog' in json_path:
-            d='fog'+d
-        elif 'snow' in json_path:
-            d='snow'+d
-        elif 'rain' in json_path:
-            d='rain'+d
-        elif 'night' in json_path:
-            d='night'+d
+        if '_fog_' in json_path:
+            d = '_fog_'+d
+        elif '_snow_' in json_path:
+            d = '_snow_'+d
+        elif '_rain_' in json_path:
+            d = '_rain_'+d
+        elif '_night_' in json_path:
+            d = '_night_'+d
         else:
             ValueError(json_path)
 
-        DatasetCatalog.register(dataset_name + d +'_' + task_name,
-                                lambda: load_ACDC_json(json_path, image_dir, openset_setting, dataset_name, False)
-                                )
-
-        class_name = get_openset_cityscapes_class(openset_setting, False) # use all ACDC data to test
-        MetadataCatalog.get(dataset_name).set(
-            thing_classes=class_name, json_file=json_path, image_root=image_dir, evaluator_type="coco"
+        DatasetCatalog.register(
+            dataset_name + d + '_' + task_name,
+            lambda json=json_path, img=image_dir, setting=openset_setting, name=dataset_name, train=is_train: load_ACDC_json(
+                json, img, setting, name, is_train=train
+            )
+        )
+        
+        class_name = get_openset_cityscapes_class(openset_setting, is_train)
+        MetadataCatalog.get(dataset_name + d + '_' + task_name).set(
+            thing_classes=class_name, 
+            json_file=json_path, 
+            image_root=image_dir, 
+            evaluator_type="coco"
         )
 
 # True for open source;

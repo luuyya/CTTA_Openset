@@ -73,6 +73,9 @@ def get_openset_cityscapes_class(openset_setting, is_train):
     return class_name
 
 def load_ACDC_json(json_file, image_root, dataset_name=None,openset_setting=1 , is_train=False):
+
+    logger.info("Preprocessing ACDC annotations in open-set setting {}...".format(openset_setting))
+
     from pycocotools.coco import COCO
 
     timer = Timer()
@@ -174,53 +177,56 @@ def load_ACDC_json(json_file, image_root, dataset_name=None,openset_setting=1 , 
                     "This json does not have valid COCO format."
                 )
 
-            segm = anno.get("segmentation", None)
-            if segm:  # either list[list[float]] or dict(RLE)
-                if isinstance(segm, dict):
-                    if isinstance(segm["counts"], list):
-                        # convert to compressed RLE
-                        segm = mask_util.frPyObjects(segm, *segm["size"])
-                else:
-                    # filter out invalid polygons (< 3 points)
-                    segm = [poly for poly in segm if len(poly) % 2 == 0 and len(poly) >= 6]
-                    if len(segm) == 0:
-                        num_instances_without_valid_segmentation += 1
-                        continue  # ignore this instance
-                obj["segmentation"] = segm
+            # segm = anno.get("segmentation", None)
+            # if segm:  # either list[list[float]] or dict(RLE)
+            #     if isinstance(segm, dict):
+            #         if isinstance(segm["counts"], list):
+            #             # convert to compressed RLE
+            #             segm = mask_util.frPyObjects(segm, *segm["size"])
+            #     else:
+            #         # filter out invalid polygons (< 3 points)
+            #         segm = [poly for poly in segm if len(poly) % 2 == 0 and len(poly) >= 6]
+            #         if len(segm) == 0:
+            #             num_instances_without_valid_segmentation += 1
+            #             continue  # ignore this instance
+            #     obj["segmentation"] = segm
 
-            keypts = anno.get("keypoints", None)
-            if keypts:  # list[int]
-                for idx, v in enumerate(keypts):
-                    if idx % 3 != 2:
-                        # COCO's segmentation coordinates are floating points in [0, H or W],
-                        # but keypoint coordinates are integers in [0, H-1 or W-1]
-                        # Therefore we assume the coordinates are "pixel indices" and
-                        # add 0.5 to convert to floating point coordinates.
-                        keypts[idx] = v + 0.5
-                obj["keypoints"] = keypts
+            # keypts = anno.get("keypoints", None)
+            # if keypts:  # list[int]
+            #     for idx, v in enumerate(keypts):
+            #         if idx % 3 != 2:
+            #             # COCO's segmentation coordinates are floating points in [0, H or W],
+            #             # but keypoint coordinates are integers in [0, H-1 or W-1]
+            #             # Therefore we assume the coordinates are "pixel indices" and
+            #             # add 0.5 to convert to floating point coordinates.
+            #             keypts[idx] = v + 0.5
+            #     obj["keypoints"] = keypts
 
             obj["bbox_mode"] = BoxMode.XYWH_ABS
 
             label = id2label[int(obj['category_id'])]
             if is_train:
                 if label.name in BASE_CLASSES:
-                    obj['category_id'] = _get_name2id_dict()[label.name]
+                    obj['category_id'] = id_map[_get_name2id_dict()[label.name]]
+                    objs.append(obj)
             else:
                 if label.name in BASE_CLASSES:
-                    obj['category_id'] = _get_name2id_dict()[label.name]
+                    obj['category_id'] = id_map[_get_name2id_dict()[label.name]]
+                    objs.append(obj)
                 else:
-                    obj['category_id'] = _get_name2id_dict()['unknown']
+                    obj['category_id'] = id_map[_get_name2id_dict()['unknown']]
+                    objs.append(obj)
 
-            if id_map:
-                annotation_category_id = obj["category_id"]
-                try:
-                    obj["category_id"] = id_map[annotation_category_id]
-                except KeyError as e:
-                    raise KeyError(
-                        f"Encountered category_id={annotation_category_id} "
-                        "but this id does not exist in 'categories' of the json file."
-                    ) from e
-            objs.append(obj)
+            # if id_map:
+            #     annotation_category_id = obj["category_id"]
+            #     try:
+            #         obj["category_id"] = id_map[annotation_category_id]
+            #     except KeyError as e:
+            #         raise KeyError(
+            #             f"Encountered category_id={annotation_category_id} "
+            #             "but this id does not exist in 'categories' of the json file."
+            #         ) from e
+            
         record["annotations"] = objs
         dataset_dicts.append(record)
 
