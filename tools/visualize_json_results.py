@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # Copyright (c) Facebook, Inc. and its affiliates.
+# 用于运行模型测试的输出json文件，会生成左右两张图片左边是预测结果，右边是？？
 
 import argparse
 import json
@@ -62,8 +63,7 @@ def main() -> None:
 
     dicts = list(DatasetCatalog.get(args.dataset))
     metadata = MetadataCatalog.get(args.dataset)
-    # import pdb
-    # pdb.set_trace()
+
     # if hasattr(metadata, "thing_dataset_id_to_contiguous_id"):
 
     #     def dataset_id_map(ds_id):

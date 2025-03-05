@@ -9,23 +9,32 @@ MODEL:
 DATASETS:
   # 未处理的数据
   # TRAIN: ('cityscapetrain',)
-  TRAIN: ('cityscapeval',)
-  TEST: ('cityscapeval', 'cityscapetest',)
+  # TEST: ('cityscapeval', 'cityscapetest',)
   # 处理的数据
   # TRAIN: ('cityscape_opensettrain_het-sem',)
   # TRAIN: ('cityscape_opensetval_het-sem',)
   # TEST: ('cityscape_opensetval_het-sem', 'cityscape_opensettest_het-sem')
-  # TRAIN: ('cityscape_opensettrain_hom-sem',)
+  TRAIN: ('cityscape_opensettrain_hom-sem',)
   # TEST: ('cityscape_opensetval_hom-sem', 'cityscape_opensettest_hom-sem')
   # TRAIN: ('cityscape_opensettrain_freq-dec',)
   # TEST: ('cityscape_opensetval_freq-dec', 'cityscape_opensettest_freq-dec')
   # TRAIN: ('cityscape_opensettrain_freq-inc',)
   # TEST: ('cityscape_opensetval_freq-inc', 'cityscape_opensettest_freq-inc')
+  # 测试时数据
+  # TRAIN: ('ACDC_opensetfogtrain_het-sem',)
+  TEST: ('ACDC_opensetfogtrain_het-sem', 'ACDC_opensetnighttrain_het-sem','ACDC_opensetraintrain_het-sem', 'ACDC_opensetsnowtrain_het-sem', )
+  # TEST: ('ACDC_opensetfogtrain_hom-sem', 'ACDC_opensetnighttrain_hom-sem', 'ACDC_opensetraintrain_hom-sem', 'ACDC_opensetsnowtrain_hom-sem', )
+  # TEST: ('ACDC_opensetfogtrain_freq-dec', 'ACDC_opensetnighttrain_freq-dec', 'ACDC_opensetraintrain_freq-dec', 'ACDC_opensetsnowtrain_freq-dec', )
+  # TEST: ('ACDC_opensetfogtrain_freq-inc', 'ACDC_opensetnighttrain_freq-inc', 'ACDC_opensetraintrain_freq-inc', 'ACDC_opensetsnowtrain_freq-inc', )
 SOLVER:
   BASE_LR: 0.001
   WEIGHT_DECAY: 0.0001
   STEPS: (2500, 4000)
   MAX_ITER: 20000
   IMS_PER_BATCH: 64
+
+# 训练时数据读取不进行随机翻转，用于呈现数据输入
+INPUT:
+  RANDOM_FLIP: None
 
 OUTPUT_DIR: ./output/res50_het_source

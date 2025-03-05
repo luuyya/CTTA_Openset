@@ -72,10 +72,16 @@ def get_openset_cityscapes_class(openset_setting, is_train):
         class_name = CLASS_NAMES
     return class_name
 
+<<<<<<< HEAD
 def load_ACDC_json(json_file, image_root, dataset_name=None,openset_setting=1 , is_train=False):
 
     logger.info("Preprocessing ACDC annotations in open-set setting {}...".format(openset_setting))
 
+=======
+def load_ACDC_json(json_file, image_root, openset_setting=1, dataset_name=None, is_train=False):
+    import pdb
+    pdb.set_trace()
+>>>>>>> fab70df32805955301f7469b5e16571ac6019883
     from pycocotools.coco import COCO
 
     timer = Timer()

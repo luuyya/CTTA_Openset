@@ -92,6 +92,9 @@ def load_cityscapes_instances_openset(image_dir, gt_dir, openset_setting=1, from
     Returns:
 
     """
+    import pdb
+    pdb.set_trace()
+
     # 基本一样，应该可以运行
     if from_json:
         assert to_polygons, (

@@ -28,7 +28,6 @@ from . import transforms as T
 from .catalog import MetadataCatalog
 
 import torchvision.transforms as transforms
-from .transforms.augmentation_impl import GaussianBlur
 
 __all__ = [
     "SizeMismatchError",
