@@ -521,6 +521,25 @@ _C.MODEL.RESNETS.DEFORM_NUM_GROUPS = 1
 # ---------------------------------------------------------------------------- #
 _C.SOLVER = CN()
 
+#CTAOD
+_C.SOLVER.CTAOD = False
+_C.SOLVER.MT = 0.99
+_C.SOLVER.RST_M = 0.01
+_C.SOLVER.LOSS_WEIGHT = 1.0
+_C.SOLVER.THRESHOLD_INIT = 0.8
+_C.SOLVER.THRESHOLD_MAX = 0.9
+_C.SOLVER.THRESHOLD_MINI = 0.9
+_C.SOLVER.ALPHA_DT = 1.3
+_C.SOLVER.GAMMA_DT = 0.95
+_C.SOLVER.PROPOSALS = 1000
+_C.SOLVER.SLOPE_LEN = 30
+_C.SOLVER.SLOPE_THRESH = 0.1
+_C.SOLVER.SCORE_EM = 0.5
+_C.SOLVER.SCORE_GAMMA = 0.9
+_C.SOLVER.SCORE_THRESH = 1.4
+
+_C.SOURCE_DIR = './output'
+
 # Options: WarmupMultiStepLR, WarmupCosineLR.
 # See detectron2/solver/build.py for definition.
 _C.SOLVER.LR_SCHEDULER_NAME = "WarmupMultiStepLR"

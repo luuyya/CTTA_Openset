@@ -95,10 +95,10 @@ class CTAOD(nn.Module):
         self.score_thresh = cfg.SOLVER.SCORE_THRESH
         self.slope_list = []
         self.stop_count = 0
-        if datasetName == "ACDC":
-            self.totalIter = 400
-        else:
-            self.totalIter = 500
+        # if datasetName == "ACDC":
+        #     self.totalIter = 400
+        # else:
+        #     self.totalIter = 500
 
     @classmethod
     def from_config(cls, cfg):
@@ -118,6 +118,7 @@ class CTAOD(nn.Module):
 
         optimizer = build_optimizer(cfg, model)
 
+        # todo:定义数据集名称，需要修改
         if cfg.DATASETS.TEST[0] == "c_fog" or cfg.DATASETS.TEST[0] == "fog":
             datasetName = "C"
         elif cfg.DATASETS.TEST[0] == "gaussian_noise":

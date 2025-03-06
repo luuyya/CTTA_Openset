@@ -118,11 +118,6 @@ def main(args):
     results = []
     epochs = 10
 
-    # if not cfg.MODEL.USE_SOURCE:# 很奇怪的一点，在cao中为何不调用最新的模型
-    #     DetectionCheckpointer(model, save_dir=cfg.OUTPUT_DIR).resume_or_load(
-    #         cfg.MODEL.WEIGHTS, resume=True
-    #     )
-
     # 用于保存模型
     if cfg.DATASETS.TEST[0] == "c_fog" or cfg.DATASETS.TEST[0] == "fog":
         datasetName = "C"

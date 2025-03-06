@@ -141,3 +141,25 @@ class DetectionCheckpointer(Checkpointer):
             if "anchor_generator.cell_anchors" in k:
                 incompatible.unexpected_keys.remove(k)
         return incompatible
+
+# 从fvcore中继承的resume_or_load方法
+# def resume_or_load(self, path: str, *, resume: bool = True) -> Dict[str, Any]:
+#     """
+#     If `resume` is True, this method attempts to resume from the last
+#     checkpoint, if exists. Otherwise, load checkpoint from the given path.
+#     This is useful when restarting an interrupted training job.
+
+#     Args:
+#         path (str): path to the checkpoint.
+#         resume (bool): if True, resume from the last checkpoint if it exists
+#             and load the model together with all the checkpointables. Otherwise
+#             only load the model without loading any checkpointables.
+
+#     Returns:
+#         same as :meth:`load`.
+#     """
+#     if resume and self.has_checkpoint():
+#         path = self.get_checkpoint_file()
+#         return self.load(path)
+#     else:
+#         return self.load(path, checkpointables=[])

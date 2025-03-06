@@ -183,6 +183,53 @@ class DatasetMapper:
         dataset_dict["image_strong"] = torch.as_tensor(
             np.ascontiguousarray(strong_image.transpose(2, 0, 1))
         )
+        
+        if False:  # 可以根据需要修改条件
+            import os
+            from PIL import Image
+            
+            # 创建保存目录
+            save_dir = "debug_strong_aug"
+            os.makedirs(save_dir, exist_ok=True)
+            
+            # 获取图像数据
+            vis_image = dataset_dict["image_strong"]
+            
+            # 处理tensor格式的图像
+            if isinstance(vis_image, torch.Tensor):
+                vis_image = vis_image.cpu().float()
+                if vis_image.shape[0] == 3:  # CHW -> HWC
+                    vis_image = vis_image.permute(1, 2, 0)
+                vis_image = (vis_image * 255).numpy().astype(np.uint8)
+            
+            # 生成简单的递增文件名
+            counter_file = os.path.join(save_dir, "counter.txt")
+            if not os.path.exists(counter_file):
+                with open(counter_file, "w") as f:
+                    f.write("0")
+            
+            with open(counter_file, "r+") as f:
+                counter = int(f.read())
+                f.seek(0)
+                f.write(str(counter + 1))
+                f.truncate()
+            
+            # 保存增强后的图像
+            save_path = os.path.join(save_dir, f"strong_aug_{counter:03d}.png")
+            Image.fromarray(vis_image).save(save_path)
+            
+            # 可选：同时保存原始图像
+            if "image" in dataset_dict:
+                orig_image = dataset_dict["image"]
+                if isinstance(orig_image, torch.Tensor):
+                    orig_image = orig_image.cpu().float()
+                    if orig_image.shape[0] == 3:
+                        orig_image = orig_image.permute(1, 2, 0)
+                    orig_image = (orig_image * 255).numpy().astype(np.uint8)
+                orig_path = os.path.join(save_dir, f"original_{counter:03d}.png")
+                Image.fromarray(orig_image).save(orig_path)
+            
+            print(f"Saved augmented image: {save_path}")
 
         if sem_seg_gt is not None:
             dataset_dict["sem_seg"] = torch.as_tensor(sem_seg_gt.astype("long"))

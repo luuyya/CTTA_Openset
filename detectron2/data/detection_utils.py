@@ -688,12 +688,15 @@ def Strong_augmentation_operation(is_train):
     """
     augmentation = []
     if is_train == False:
+        # 随机应用颜色抖动
         augmentation.append(
             transforms.RandomApply([transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)], p=0.8)
         )
+        # 随机灰度化
         augmentation.append(transforms.RandomGrayscale(p=0.2))
+        # 随机应用高斯模糊
         augmentation.append(transforms.RandomApply([GaussianBlur((0.1, 2.0))], p=0.5))
-
+    
         randcrop_transform = transforms.Compose(
             [
                 transforms.ToTensor(),

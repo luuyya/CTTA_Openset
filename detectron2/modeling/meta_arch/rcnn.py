@@ -4,6 +4,7 @@ import numpy as np
 from typing import Dict, List, Optional, Tuple
 import torch
 from torch import nn
+from copy import deepcopy
 
 from detectron2.config import configurable
 from detectron2.data.detection_utils import convert_image_to_rgb
@@ -227,9 +228,9 @@ class GeneralizedRCNN(nn.Module):
             return GeneralizedRCNN._postprocess(results, batched_inputs, images.image_sizes)
         elif (not do_postprocess) and mode == "eval":
             return results
-        # elif mode == "memclr":
-        #     assert not torch.jit.is_scripting(), "Scripting is not supported for postprocess."
-        #     return features, proposals, results, GeneralizedRCNN._postprocess(deepcopy(results), batched_inputs, images.image_sizes)
+        elif mode == "memclr":
+            assert not torch.jit.is_scripting(), "Scripting is not supported for postprocess."
+            return features, proposals, results, GeneralizedRCNN._postprocess(deepcopy(results), batched_inputs, images.image_sizes)
         elif mode == "cotta":
             assert not torch.jit.is_scripting(), "Scripting is not supported for postprocess."
             return results, GeneralizedRCNN._postprocess(results, batched_inputs, images.image_sizes)

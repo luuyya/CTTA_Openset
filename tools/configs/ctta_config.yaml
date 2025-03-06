@@ -3,7 +3,7 @@ MODEL:
 #  USE_SOURCE: False #是否使用source网络或者是使用微调后的网络
   META_ARCHITECTURE: "CTAOD"
   ROI_HEADS:
-    NUM_CLASSES: 8
+    NUM_CLASSES: 3
   RESNETS:
     NORM: "FrozenBN"
 INPUT:
@@ -13,12 +13,7 @@ INPUT:
   MAX_SIZE_TRAIN: 2048
   MAX_SIZE_TEST: 2048
 DATASETS:
-  #TRAIN: ("Train",)
-  #TEST: ("acdc_fog","acdc_night","acdc_rain","acdc_snow")
-  TEST: ("c_fog","c_motion_blur","c_snow","c_brightness","c_defocus_blur")
-  # TEST: ("fog","motion_blur","snow","brightness","defocus_blur")
-  #"gaussian_noise", "shot_noise", "impulse_noise",
-  #TEST: ("defocus_blur", "glass_blur", "motion_blur", "zoom_blur", "snow", "frost", "fog", "brightness", "contrast", "elastic_transform", "pixelate", "jpeg_compression")
+  TEST: ('ACDC_openset_fog_train_het-sem', 'ACDC_openset_night_train_het-sem','ACDC_openset_rain_train_het-sem', 'ACDC_openset_snow_train_het-sem', )
 
 SOLVER:
   BASE_LR: 0.001
@@ -45,5 +40,5 @@ SOLVER:
   SCORE_GAMMA: 0.8
   SCORE_THRESH: 1.4
 
-OUTPUT_DIR: /public/home/luya/code/CTTA_Openset/tools/output/res50_het_ctta
-SOURCE_DIR: /public/home/luya/code/CTTA_Openset/tools/output/res50_het_source
+OUTPUT_DIR: /public/home/luya/code/CTTA_Openset/tools/output/CTTA_het3_5
+SOURCE_DIR: /public/home/luya/code/CTTA_Openset/tools/output/source3_5
